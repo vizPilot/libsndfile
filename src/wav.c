@@ -208,7 +208,7 @@ wav_open	(SF_PRIVATE *psf)
 			} ;
 
 #if (ENABLE_EXPERIMENTAL_CODE == 0)
-		/* For now, don't support writing MPEGLAYER3 WAVs, as we can't guarentee that
+		/* For now, don't support writing MPEGLAYER3 WAVs, as we can't guarantee that
 		** such a file written by libsndfile would have the same length when opened again.
 		*/
 		if (subformat == SF_FORMAT_MPEG_LAYER_III)
@@ -1172,9 +1172,9 @@ wav_write_header (SF_PRIVATE *psf, int calc_length)
 	/* RIFF/RIFX marker, length, WAVE and 'fmt ' markers. */
 
 	if (psf->endian == SF_ENDIAN_LITTLE)
-		psf_binheader_writef (psf, "etm8", BHWm (RIFF_MARKER), BHW8 ((psf->filelength < 8) ? 8 : psf->filelength - 8)) ;
+        psf_binheader_writef (psf, "etm8", BHWm (RIFF_MARKER), BHW8 ((psf->filelength < 8) ? 8 : SF_MIN(psf->filelength - 8, UINT32_MAX))) ;
 	else
-		psf_binheader_writef (psf, "Etm8", BHWm (RIFX_MARKER), BHW8 ((psf->filelength < 8) ? 8 : psf->filelength - 8)) ;
+        psf_binheader_writef (psf, "Etm8", BHWm (RIFX_MARKER), BHW8 ((psf->filelength < 8) ? 8 : SF_MIN(psf->filelength - 8, UINT32_MAX))) ;
 
 	/* WAVE and 'fmt ' markers. */
 	psf_binheader_writef (psf, "mm", BHWm (WAVE_MARKER), BHWm (fmt_MARKER)) ;
@@ -1258,7 +1258,7 @@ wav_write_header (SF_PRIVATE *psf, int calc_length)
 		psf_binheader_writef (psf, "m4z", BHWm (PAD_MARKER), BHW4 (k), BHWz (k)) ;
 		} ;
 
-	psf_binheader_writef (psf, "tm8", BHWm (data_MARKER), BHW8 (psf->datalength)) ;
+    psf_binheader_writef (psf, "tm8", BHWm (data_MARKER), BHW8 (SF_MIN(psf->datalength, UINT32_MAX))) ;
 	psf_fwrite (psf->header.ptr, psf->header.indx, 1, psf) ;
 	if (psf->error)
 		return psf->error ;
@@ -1537,7 +1537,7 @@ wav_read_smpl_chunk (SF_PRIVATE *psf, uint32_t chunklen)
 **
 **        0x01 On: One Shot         Off: Loop
 **        0x02 On: Root note is Set Off: No root
-**        0x04 On: Stretch is On,   Off: Strech is OFF
+**        0x04 On: Stretch is On,   Off: Stretch is OFF
 **        0x08 On: Disk Based       Off: Ram based
 **        0x10 On: ??????????       Off: ????????? (Acidizer puts that ON)
 **

@@ -439,7 +439,6 @@ sf_open	(const char *path, int mode, SF_INFO *sfinfo)
 SNDFILE*
 sf_open_fd	(int fd, int mode, SF_INFO *sfinfo, int close_desc)
 {	SF_PRIVATE 	*psf ;
-	SNDFILE		*result ;
 
 	if ((SF_CONTAINER (sfinfo->format)) == SF_FORMAT_SD2)
 	{	sf_errno = SFE_SD2_FD_DISALLOWED ;
@@ -461,22 +460,19 @@ sf_open_fd	(int fd, int mode, SF_INFO *sfinfo, int close_desc)
 	psf_copy_filename (psf, "") ;
 
 	psf->file.mode = mode ;
+	psf->file.do_not_close_descriptor = !close_desc;
 	psf_set_file (psf, fd) ;
 	psf->is_pipe = psf_is_pipe (psf) ;
 	psf->fileoffset = psf_ftell (psf) ;
 
-	result = psf_open_file (psf, sfinfo) ;
-	if (result != NULL && ! close_desc)
-			psf->file.do_not_close_descriptor = SF_TRUE ;
-
-	return result ;
+	return psf_open_file (psf, sfinfo) ;
 } /* sf_open_fd */
 
 SNDFILE*
 sf_open_virtual	(SF_VIRTUAL_IO *sfvirtual, int mode, SF_INFO *sfinfo, void *user_data)
 {	SF_PRIVATE 	*psf ;
 
-	/* Make sure we have a valid set ot virtual pointers. */
+	/* Make sure we have a valid set of virtual pointers. */
 	if (sfvirtual->get_filelen == NULL)
 	{	sf_errno = SFE_BAD_VIRTUAL_IO ;
 		snprintf (sf_parselog, sizeof (sf_parselog), "Bad vio_get_filelen in SF_VIRTUAL_IO struct.\n") ;
@@ -662,7 +658,7 @@ sf_format_check	(const SF_INFO *info)
 
 	/* This is the place where each file format can check if the supplied
 	** SF_INFO struct is valid.
-	** Return 0 on failure, 1 ons success.
+	** Return 0 on failure, 1 on success.
 	*/
 
 	if (info->channels < 1 || info->channels > SF_MAX_CHANNELS)
@@ -1116,7 +1112,7 @@ sf_command	(SNDFILE *sndfile, int command, void *data, int datasize)
 
 				format = SF_CODEC (psf->sf.format) ;
 
-				/* Only files containg the following data types support the PEAK chunk. */
+				/* Only files containing the following data types support the PEAK chunk. */
 				if (format != SF_FORMAT_FLOAT && format != SF_FORMAT_DOUBLE)
 					return SF_FALSE ;
 
@@ -1526,7 +1522,7 @@ sf_seek	(SNDFILE *sndfile, sf_count_t offset, int whence)
 	** used with SEEK_SET.
 	*/
 	switch (whence)
-	{	/* The SEEK_SET behaviour is independant of mode. */
+	{	/* The SEEK_SET behaviour is independent of mode. */
 		case SEEK_SET :
 		case SEEK_SET | SFM_READ :
 		case SEEK_SET | SFM_WRITE :
